@@ -1,0 +1,101 @@
+:root {
+  --color-bg: #ffffff;
+  --color-text: #1a1a1a;
+  --color-primary: #2554c7;
+  --color-danger: #c62828;
+  --color-skeleton: #e9ecef;
+  --radius: 8px;
+  --space: 1rem;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+}
+.skip-link:focus {
+  left: var(--space);
+  top: var(--space);
+  background: var(--color-bg);
+  padding: 0.5rem 1rem;
+  z-index: 100;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.btn {
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font: inherit;
+}
+.btn--primary {
+  background: var(--color-primary);
+  color: #fff;
+}
+.btn--secondary {
+  background: var(--color-skeleton);
+  color: var(--color-text);
+}
+.btn--danger {
+  background: var(--color-danger);
+  color: #fff;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: var(--space);
+}
+.field input {
+  padding: 0.6rem;
+  border: 1px solid #999;
+  border-radius: var(--radius);
+  font: inherit;
+}
+.field input[aria-invalid='true'] {
+  border-color: var(--color-danger);
+}
+.field-error {
+  color: var(--color-danger);
+  margin: 0;
+  font-size: 0.875rem;
+}
