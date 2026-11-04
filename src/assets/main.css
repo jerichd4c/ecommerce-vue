@@ -99,3 +99,11 @@ img {
   margin: 0;
   font-size: 0.875rem;
 }
+
+.field select {
+  padding: 0.6rem;
+  border: 1px solid #999;
+  border-radius: var(--radius);
+  font: inherit;
+  background: var(--color-bg);
+}
