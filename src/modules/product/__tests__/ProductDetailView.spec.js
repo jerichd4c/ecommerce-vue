@@ -42,6 +42,14 @@ describe('ProductDetailView', () => {
     expect(wrapper.text()).toContain('Camisa de algodón')
   })
 
+  it('usa el nombre del producto como título de la página', async () => {
+    fetchProduct.mockResolvedValue(camisa)
+    mountView()
+    await flushPromises()
+
+    expect(document.title).toBe('Camisa | Ecommerce Vue')
+  })
+
   it('agrega el producto al carrito', async () => {
     fetchProduct.mockResolvedValue(camisa)
     const wrapper = mountView()
