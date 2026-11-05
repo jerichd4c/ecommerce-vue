@@ -65,6 +65,49 @@ La misma regla aplica a los componentes de `shared/`. Por ejemplo, `AppHeader` n
 />
 ```
 
+### Contratos entre módulos
+
+Estas son las funciones que un módulo puede usar de otro. Si necesitas cambiar un contrato, coméntalo primero con el responsable del módulo.
+
+**Store del carrito** (`modules/cart/store.js`)
+
+| Nombre             | Qué hace                                                    |
+| ------------------ | ----------------------------------------------------------- |
+| `items`            | Lista de `{ product, qty }`                                 |
+| `count`            | Cantidad total de productos                                 |
+| `total`            | Precio total                                                |
+| `addItem(product)` | Agrega un producto o suma 1 si ya estaba                    |
+| `removeItem(id)`   | Quita un producto                                           |
+| `setQty(id, qty)`  | Cambia la cantidad                                          |
+| `clear()`          | Vacía el carrito (lo usa el checkout al terminar la compra) |
+
+**Store de sesión** (`modules/auth/store.js`)
+
+| Nombre               | Qué hace                                   |
+| -------------------- | ------------------------------------------ |
+| `token`              | Token de la sesión, o `null`               |
+| `user`               | Datos del usuario, o `null`                |
+| `isAuthenticated`    | `true` si hay sesión                       |
+| `login(credentials)` | Inicia sesión con `{ username, password }` |
+| `logout()`           | Cierra la sesión                           |
+
+Si el login falla, `login()` lanza un error con el mensaje de la API (por ejemplo, "Invalid credentials").
+
+### API (DummyJSON)
+
+| Uso                        | Endpoint                        |
+| -------------------------- | ------------------------------- |
+| Productos paginados        | `GET /products?limit=20&skip=0` |
+| Buscar                     | `GET /products/search?q=texto`  |
+| Lista de categorías        | `GET /products/categories`      |
+| Productos de una categoría | `GET /products/category/{slug}` |
+| Un producto                | `GET /products/{id}`            |
+| Iniciar sesión             | `POST /auth/login`              |
+
+- Para llamar a la API se usa siempre `http()` de `shared/http.js`, nunca `fetch` directamente.
+- El login responde con el token en el campo `accessToken` (no `token`).
+- DummyJSON no permite combinar búsqueda y categoría en una misma petición; el catálogo trae los resultados de la búsqueda y filtra la categoría en el navegador.
+
 ## Estructura de carpetas
 
 ```
@@ -139,6 +182,13 @@ src/
 4. Si necesita estado, crear `store.js` con `defineStore`.
 
 ## Convenciones de código
+
+### Reglas generales
+
+- Cada quien trabaja dentro de su módulo. Si necesitas cambiar algo en `shared/` o en `router/`, avísalo al equipo antes.
+- Usar `BaseButton` y `BaseInput` en lugar de crear botones o campos nuevos.
+- Todas las imágenes de productos con `LazyImage` y con texto alternativo (`alt`).
+- Usar las variables de color de `src/assets/main.css` en lugar de colores fijos.
 
 ### Vue
 
@@ -289,14 +339,82 @@ Para detectar pruebas que dependen del orden, correrlas en orden aleatorio:
 npx vitest run --sequence.shuffle
 ```
 
-## Flujo de trabajo
+## Flujo de trabajo con Git
 
-El flujo completo de ramas, commits y Pull Requests está en el [README](README.md#cómo-trabajamos-con-git). Resumen:
+### Ramas
 
-1. Crear una rama desde `develop`: `feature/<modulo>-<tarea>`.
-2. Commits con formato `tipo: descripción` (`feat`, `fix`, `style`, `refactor`, `docs`, `test`, `chore`).
-3. Abrir un Pull Request hacia `develop`, con `Closes #N` si resuelve un issue.
-4. Esperar una aprobación antes de hacer merge.
+- `main`: versión estable, la que se entrega. Nadie trabaja aquí directamente.
+- `develop`: donde se junta el trabajo de todos.
+- `feature/<modulo>-<tarea>`: una rama por tarea. Ejemplo: `feature/cart-store`. Para correcciones, `fix/<tema>`; para documentación, `docs/<tema>`.
+
+### Pasos para cada tarea
+
+1. Actualizar `develop`:
+
+   ```bash
+   git switch develop
+   git pull
+   ```
+
+2. Crear la rama de la tarea:
+
+   ```bash
+   git switch -c feature/cart-store
+   ```
+
+3. Trabajar y hacer commits pequeños.
+
+4. Antes de subir, comprobar que todo pasa:
+
+   ```bash
+   npm run format
+   npm run lint
+   npx vitest run --sequence.shuffle
+   npm run build
+   ```
+
+5. Subir la rama:
+
+   ```bash
+   git push -u origin feature/cart-store
+   ```
+
+6. Abrir un Pull Request en GitHub hacia `develop`.
+
+7. Esperar una aprobación y luego hacer merge.
+
+8. Borrar la rama cuando ya esté unida, en GitHub y en tu computadora (`git branch -d feature/cart-store`).
+
+### Mensajes de commit
+
+Formato: `tipo: descripción corta en minúscula`
+
+| Tipo       | Cuándo                                     |
+| ---------- | ------------------------------------------ |
+| `feat`     | Algo nuevo                                 |
+| `fix`      | Corrección de un error                     |
+| `style`    | Cambios visuales o de CSS                  |
+| `refactor` | Reorganizar código sin cambiar lo que hace |
+| `docs`     | Documentación                              |
+| `test`     | Pruebas                                    |
+| `chore`    | Configuración o tareas de mantenimiento    |
+
+Ejemplos:
+
+```
+feat: agregar scroll infinito al catálogo
+fix: corregir total del carrito al quitar productos
+docs: completar instrucciones del readme
+```
+
+### Pull Requests
+
+- Un Pull Request por tarea, no uno gigante por módulo.
+- En la descripción, explicar qué se hizo y cómo probarlo.
+- Si el PR resuelve un issue, escribir `Closes #N` en la descripción para que se cierre solo al unirse.
+- Toda rama necesita **una aprobación** antes de unirse a `develop`.
+- Nadie aprueba un PR que tenga commits propios.
+- Si hay conflictos, los resuelve quien abrió el PR.
 
 ### Antes de abrir un Pull Request
 
