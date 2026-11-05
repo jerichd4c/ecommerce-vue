@@ -3,6 +3,6 @@ export default [
     path: '/login',
     name: 'login',
     component: () => import('./views/LoginView.vue'),
-    meta: { guestOnly: true },
+    meta: { guestOnly: true, title: 'Iniciar sesión' },
   },
 ]

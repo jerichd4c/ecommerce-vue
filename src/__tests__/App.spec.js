@@ -8,7 +8,7 @@ import { useCartStore } from '@/modules/cart/store'
 
 const Page = { template: '<p>Página</p>' }
 
-async function mountApp(path) {
+async function mountApp(path, options = {}) {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
@@ -19,7 +19,7 @@ async function mountApp(path) {
     ],
   })
   await router.push(path)
-  const wrapper = mount(App, { global: { plugins: [router] } })
+  const wrapper = mount(App, { global: { plugins: [router] }, ...options })
   return { wrapper, router }
 }
 
@@ -54,5 +54,16 @@ describe('App', () => {
     expect(auth.isAuthenticated).toBe(false)
     expect(router.currentRoute.value.name).toBe('catalog')
     expect(wrapper.find('.app-header button').exists()).toBe(false)
+  })
+
+  it('lleva el foco al contenido principal al cambiar de página', async () => {
+    const { wrapper, router } = await mountApp('/', { attachTo: document.body })
+    expect(document.activeElement).not.toBe(wrapper.find('main').element)
+
+    await router.push('/cart')
+    await flushPromises()
+
+    expect(document.activeElement).toBe(wrapper.find('main').element)
+    wrapper.unmount()
   })
 })

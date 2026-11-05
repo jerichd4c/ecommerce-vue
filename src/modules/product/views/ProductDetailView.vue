@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 import BaseButton from '@/shared/components/BaseButton.vue'
 import LazyImage from '@/shared/components/LazyImage.vue'
 import { formatPrice } from '@/shared/utils/format'
+import { setPageTitle } from '@/shared/utils/pageTitle'
 import { useCartStore } from '@/modules/cart/store'
 import { useProductStore } from '../store'
 
@@ -24,6 +25,13 @@ watch(
     store.load(id)
   },
   { immediate: true },
+)
+
+watch(
+  () => store.product?.title,
+  (title) => {
+    if (title) setPageTitle(title)
+  },
 )
 
 function addToCart() {

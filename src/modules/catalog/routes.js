@@ -1,1 +1,8 @@
-export default [{ path: '/', name: 'catalog', component: () => import('./views/CatalogView.vue') }]
+export default [
+  {
+    path: '/',
+    name: 'catalog',
+    component: () => import('./views/CatalogView.vue'),
+    meta: { title: 'Catálogo' },
+  },
+]
