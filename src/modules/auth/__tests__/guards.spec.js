@@ -5,6 +5,7 @@ import { useAuthStore } from '../store'
 
 describe('authGuard', () => {
   beforeEach(() => {
+    localStorage.clear()
     setActivePinia(createPinia())
   })
 

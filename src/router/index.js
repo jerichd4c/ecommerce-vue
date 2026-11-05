@@ -5,6 +5,7 @@ import cartRoutes from '@/modules/cart/routes'
 import authRoutes from '@/modules/auth/routes'
 import checkoutRoutes from '@/modules/checkout/routes'
 import { authGuard } from '@/modules/auth/guards'
+import { setPageTitle } from '@/shared/utils/pageTitle'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -18,6 +19,7 @@ const router = createRouter({
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: () => import('@/shared/views/NotFoundView.vue'),
+      meta: { title: 'Página no encontrada' },
     },
   ],
   scrollBehavior(to, from, saved) {
@@ -26,5 +28,7 @@ const router = createRouter({
 })
 
 router.beforeEach(authGuard)
+
+router.afterEach((to) => setPageTitle(to.meta.title))
 
 export default router
