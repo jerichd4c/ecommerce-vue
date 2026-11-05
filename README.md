@@ -72,6 +72,7 @@ src/
   shared/         piezas que usan todos los módulos
     components/   BaseButton, BaseInput, LazyImage, AppHeader
     views/        página 404
+    utils/        funciones de ayuda (por ejemplo, formatPrice)
     http.js       cliente para llamar a la API
   router/         une las rutas de todos los módulos
   assets/         estilos globales
@@ -81,8 +82,10 @@ Cada módulo tiene la misma forma:
 
 - `routes.js`: las rutas del módulo
 - `store.js`: su estado con Pinia (si lo necesita)
+- `api.js`: las llamadas a la API del módulo (si las necesita)
 - `views/`: las páginas
 - `components/`: componentes que solo usa ese módulo
+- `composables/`: lógica reutilizable con reactividad (por ejemplo, `useInfiniteScroll`)
 - `__tests__/`: sus pruebas
 
 Regla principal: **cada quien trabaja dentro de su módulo**. Si necesitas cambiar algo en `shared/` o en `router/`, avísalo al equipo antes.
@@ -91,7 +94,7 @@ Regla principal: **cada quien trabaja dentro de su módulo**. Si necesitas cambi
 
 ### Sebastián Cohen (jerichd4c) - Líder técnico
 
-Módulo: **catalog**
+Módulo: **catalog** (terminado, PR #2)
 
 - Lista de productos con scroll infinito (`IntersectionObserver`)
 - Carga progresiva de imágenes usando `LazyImage`
@@ -104,41 +107,43 @@ Además:
 - Mantener `shared/` y `router/`
 - Revisar y aprobar los Pull Requests hacia `develop`
 - Pasar `develop` a `main` cuando una fase esté estable
-- Escribir el `CONTRIBUTING.md`
+- Mantener el `README.md` y el `CONTRIBUTING.md`
 - Revisión final de accesibilidad y adaptación a pantallas
 
-### Jesús Quintero (JesusQC)
+### Jesús Quintero (JesusQG)
 
 Módulos: **auth** y **checkout**
 
-- Página de inicio de sesión con validación de campos
-- Llamar a `POST /auth/login` de DummyJSON y guardar el token
-- Mantener la sesión al recargar la página (`localStorage`)
-- Cerrar sesión
-- Formulario de compra simulado con validación de cada campo (nombre, correo, dirección, tarjeta, etc.)
-- Mostrar un resumen del carrito en el checkout y una pantalla de confirmación al terminar
+Terminado:
+
+- Store de sesión: login con `POST /auth/login` de DummyJSON, cierre de sesión y sesión guardada en `localStorage` (PR #5)
+
+Pendiente:
+
+- Página de inicio de sesión con validación de campos (issue #8)
+- Checkout: formulario de compra simulado con validación, resumen del carrito y pantalla de confirmación (issue #9)
 - Mensajes de error accesibles (usar `BaseInput`, que ya los soporta)
 
 Además:
 
 - Revisar los Pull Requests de Sebastián
-- Ser el primer apoyo de Gianpaolo cuando tenga dudas
 
 ### Gianpaolo Strada (GianpaoloStrad)
 
-Módulos: **product** y **cart**, y el **header**
+Módulos: **product** y **cart**, y el **header** (todo terminado)
 
-- Vista de detalle: cargar el producto con `GET /products/:id` y mostrar imagen, nombre, precio, descripción y botón "Agregar al carrito"
-- Completar el store del carrito: `addItem`, `removeItem`, `setQty` y agregar `clear`
-- Guardar el carrito en `localStorage` para que no se pierda al recargar
-- Vista del carrito: lista de productos, cambiar cantidades, quitar productos y total actualizado
-- Header: contador de productos del carrito y mostrar "Iniciar sesión" o "Cerrar sesión" según el estado
+- Store del carrito con `addItem`, `removeItem`, `setQty` y `clear`, guardado en `localStorage` (PR #3)
+- Vista del carrito: lista de productos, cambiar cantidades, quitar productos y total actualizado (PR #4)
+- Vista de detalle: producto con `GET /products/:id`, estados de carga, error y "no encontrado" (PR #6)
+- Header: contador del carrito y "Iniciar sesión" o "Cerrar sesión" según el estado (PR #7)
 
-Las tareas de Gianpaolo están bien delimitadas y no dependen de otras partes. Si algo no queda claro, primero se pregunta a Jesús y luego a Sebastián.
+Además:
+
+- Revisar los Pull Requests de Sebastián mientras Jesús no esté disponible
 
 ## Contratos entre módulos
 
-Para que nadie se bloquee esperando a otro, estas funciones ya están definidas. Se pueden usar aunque todavía no estén terminadas.
+Estas son las funciones que un módulo puede usar de otro. Ya están implementadas.
 
 **Store del carrito** (`modules/cart/store.js`), responsable: Gianpaolo
 
@@ -161,6 +166,8 @@ Para que nadie se bloquee esperando a otro, estas funciones ya están definidas.
 | `isAuthenticated`    | `true` si hay sesión                       |
 | `login(credentials)` | Inicia sesión con `{ username, password }` |
 | `logout()`           | Cierra la sesión                           |
+
+Si el login falla, `login()` lanza un error con el mensaje de la API (por ejemplo, "Invalid credentials").
 
 Si necesitas cambiar un contrato, coméntalo primero con el responsable.
 
@@ -194,14 +201,14 @@ Pasos para cada tarea:
 1. Actualizar `develop`:
 
    ```bash
-   git checkout develop
+   git switch develop
    git pull
    ```
 
 2. Crear la rama de la tarea:
 
    ```bash
-   git checkout -b feature/cart-store
+   git switch -c feature/cart-store
    ```
 
 3. Trabajar y hacer commits pequeños.
@@ -209,10 +216,13 @@ Pasos para cada tarea:
 4. Antes de subir, comprobar que todo pasa:
 
    ```bash
+   npm run format
    npm run lint
-   npm run test:unit -- --run
+   npx vitest run --sequence.shuffle
    npm run build
    ```
+
+   `--sequence.shuffle` corre las pruebas en orden aleatorio. Así se detectan pruebas que dependen unas de otras (por ejemplo, por datos que quedan en `localStorage`).
 
 5. Subir la rama:
 
@@ -224,7 +234,7 @@ Pasos para cada tarea:
 
 7. Esperar una aprobación y luego hacer merge.
 
-8. Borrar la rama cuando ya esté unida.
+8. Borrar la rama cuando ya esté unida, en GitHub y en tu computadora (`git branch -d feature/cart-store`).
 
 ### Mensajes de commit
 
@@ -252,10 +262,12 @@ docs: completar instrucciones del readme
 
 - Un Pull Request por tarea, no uno gigante por módulo.
 - En la descripción, explicar qué se hizo y cómo probarlo.
+- Si el PR resuelve un issue, escribir `Closes #N` en la descripción para que se cierre solo al unirse.
 - Toda rama necesita **una aprobación** antes de unirse a `develop`.
 - Quién revisa:
   - Los PR de Gianpaolo y de Jesús los revisa Sebastián.
-  - Los PR de Sebastián los revisa Jesús.
+  - Los PR de Sebastián los revisa Jesús, o Gianpaolo mientras Jesús no esté disponible.
+- Nadie aprueba un PR que tenga commits propios.
 - Si hay conflictos, los resuelve quien abrió el PR.
 
 ## Reglas de código
@@ -273,7 +285,7 @@ docs: completar instrucciones del readme
 ## Fases
 
 1. **Sprint 0** (terminado): estructura del proyecto, rutas, componentes base y repositorio.
-2. **Sprint 1**: cada quien entrega su módulo funcionando de forma básica.
+2. **Sprint 1** (en curso): catálogo, detalle, carrito, header y store de sesión terminados. Faltan la página de login (issue #8) y el checkout (issue #9).
 3. **Sprint 2**: unir todo, estados de carga y error, adaptación a pantallas y accesibilidad.
 4. **Cierre**: completar `README.md` y `CONTRIBUTING.md`, revisión final y ensayo de la defensa.
 
