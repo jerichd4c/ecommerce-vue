@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, reactive, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, reactive, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import BaseButton from '@/shared/components/BaseButton.vue'
 import BaseInput from '@/shared/components/BaseInput.vue'
@@ -42,6 +42,12 @@ const errors = reactive({
 const isProcessing = ref(false)
 const orderCompleted = ref(false)
 const completedOrder = ref(null)
+const confirmationHeading = ref(null)
+
+let processingTimer
+
+// Si el usuario sale de la página durante "Procesando...", la compra no se completa
+onBeforeUnmount(() => clearTimeout(processingTimer))
 
 async function handleSubmit() {
   const result = validateCheckout(form)
@@ -60,8 +66,10 @@ async function handleSubmit() {
   isProcessing.value = true
 
   // Simulación de envío con 1 segundo de retraso
-  await new Promise((resolve) => setTimeout(resolve, 1000))
+  processingTimer = setTimeout(completeOrder, 1000)
+}
 
+async function completeOrder() {
   // Guardar snapshot del pedido antes de vaciar el carrito
   completedOrder.value = {
     orderNumber: `ORD-${Math.floor(100000 + Math.random() * 900000)}`,
@@ -77,19 +85,23 @@ async function handleSubmit() {
 
   // Vaciar el carrito después de confirmar la orden
   cart.clear()
+
+  // El botón de pagar ya no existe: se lleva el foco al título de la confirmación
+  await nextTick()
+  confirmationHeading.value?.focus()
 }
 </script>
 
 <template>
   <section class="checkout">
     <!-- Pantalla de confirmación de compra -->
-    <div v-if="orderCompleted" class="checkout__confirmation" role="status">
-      <h1>¡Gracias por tu compra!</h1>
+    <div v-if="orderCompleted" class="checkout__confirmation">
+      <h1 ref="confirmationHeading" tabindex="-1">¡Gracias por tu compra!</h1>
       <p class="checkout__order-number">
         Número de pedido: <strong>#{{ completedOrder.orderNumber }}</strong>
       </p>
       <p>
-        Hemos enviado la confirmación y detalles del envío a
+        Pedido simulado: no se realizó ningún cobro. La confirmación se enviaría a
         <strong>{{ completedOrder.customerEmail }}</strong
         >.
       </p>
@@ -320,6 +332,8 @@ async function handleSubmit() {
 }
 
 .checkout__fieldset {
+  /* Por defecto un fieldset no se achica más que su contenido y desborda en celular */
+  min-inline-size: 0;
   border: 1px solid var(--color-skeleton);
   border-radius: var(--radius);
   padding: var(--space);
@@ -333,8 +347,13 @@ async function handleSubmit() {
 
 .checkout__row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space);
+  gap: 0 var(--space);
+}
+
+@media (min-width: 480px) {
+  .checkout__row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
 }
 
 .checkout__submit-btn {

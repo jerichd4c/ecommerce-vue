@@ -135,6 +135,30 @@ describe('CheckoutView', () => {
     // Enlace para volver
     const backBtn = wrapper.findComponent(RouterLinkStub)
     expect(backBtn.props('to')).toEqual({ name: 'catalog' })
+
+    // El foco pasa al título de la confirmación
+    expect(document.activeElement?.tagName).toBe('H1')
+  })
+
+  it('no vacía el carrito si el usuario sale durante el procesamiento', async () => {
+    vi.useFakeTimers()
+    cart.addItem(mockProduct)
+
+    const wrapper = mountCheckout()
+
+    await wrapper.find('input#name').setValue('Jesús Quintero')
+    await wrapper.find('input#email').setValue('jesus@example.com')
+    await wrapper.find('input#address').setValue('Calle 72 con Av. 10')
+    await wrapper.find('input#city').setValue('Maracaibo')
+    await wrapper.find('input#cardNumber').setValue('4532 1234 5678 9012')
+    await wrapper.find('input#cardExp').setValue('12/28')
+    await wrapper.find('input#cardCvv').setValue('789')
+
+    await wrapper.find('form').trigger('submit')
+    wrapper.unmount()
+
+    await vi.advanceTimersByTimeAsync(1000)
+
+    expect(cart.items).toHaveLength(1)
   })
 })
-
