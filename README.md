@@ -72,7 +72,7 @@ src/
   shared/         piezas que usan todos los módulos
     components/   BaseButton, BaseInput, LazyImage, AppHeader
     views/        página 404
-    utils/        funciones de ayuda (por ejemplo, formatPrice)
+    utils/        funciones de ayuda (formatPrice, setPageTitle)
     http.js       cliente para llamar a la API
   router/         une las rutas de todos los módulos
   assets/         estilos globales
@@ -112,17 +112,12 @@ Además:
 
 ### Jesús Quintero (JesusQG)
 
-Módulos: **auth** y **checkout**
-
-Terminado:
+Módulos: **auth** y **checkout** (todo terminado)
 
 - Store de sesión: login con `POST /auth/login` de DummyJSON, cierre de sesión y sesión guardada en `localStorage` (PR #5)
-
-Pendiente:
-
-- Página de inicio de sesión con validación de campos (issue #8)
-- Checkout: formulario de compra simulado con validación, resumen del carrito y pantalla de confirmación (issue #9)
-- Mensajes de error accesibles (usar `BaseInput`, que ya los soporta)
+- Página de inicio de sesión con validación de campos y redirección segura (PR #11, issue #8)
+- Checkout: formulario de compra simulado con validación, resumen del carrito y pantalla de confirmación (PR #12, issue #9)
+- Correcciones del checkout: formulario en celular y compra cancelada si se sale durante el procesamiento (PR #13)
 
 Además:
 
@@ -285,9 +280,22 @@ docs: completar instrucciones del readme
 ## Fases
 
 1. **Sprint 0** (terminado): estructura del proyecto, rutas, componentes base y repositorio.
-2. **Sprint 1** (en curso): catálogo, detalle, carrito, header y store de sesión terminados. Faltan la página de login (issue #8) y el checkout (issue #9).
-3. **Sprint 2**: unir todo, estados de carga y error, adaptación a pantallas y accesibilidad.
-4. **Cierre**: completar `README.md` y `CONTRIBUTING.md`, revisión final y ensayo de la defensa.
+2. **Sprint 1** (terminado): catálogo, detalle, carrito, header, inicio de sesión y checkout. Todos los requisitos del enunciado están cumplidos.
+3. **Sprint 2** (terminado): títulos por página, foco al cambiar de página y revisión final de accesibilidad y adaptación a pantallas.
+4. **Cierre**: pasar `develop` a `main` y ensayo de la defensa.
+
+## Accesibilidad y adaptación a pantallas
+
+Revisión final hecha sobre todas las pantallas (catálogo, detalle, carrito vacío y con productos, login con errores, checkout con errores, confirmación y 404):
+
+- Cada página tiene su propio título en la pestaña (por ejemplo, "Carrito | Ecommerce Vue"). En el detalle, el título es el nombre del producto.
+- Al cambiar de página, el foco pasa al contenido principal para que el teclado y el lector de pantalla sigan desde ahí.
+- Enlace "Saltar al contenido" al inicio de cada página.
+- Un solo `<h1>` por página y sin saltos de nivel en los encabezados.
+- Todas las imágenes con texto alternativo y todos los campos con su etiqueta.
+- Errores de formulario asociados a su campo (`aria-invalid` y `aria-describedby`) y foco en el primer campo con error.
+- Contraste de texto de al menos 4.5:1 en todas las pantallas.
+- Sin desbordes horizontales en 320, 375, 768 y 1280 px de ancho.
 
 ## Defensa
 

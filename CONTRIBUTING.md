@@ -31,6 +31,8 @@ Las vistas no llaman a la API directamente; siempre lo hacen a través del store
 - Cada módulo declara sus rutas en su propio `routes.js`.
 - `src/router/index.js` solo junta esas rutas, agrega la página 404 y registra el guard de autenticación.
 - Todas las vistas se cargan de forma diferida (`() => import(...)`), así cada página es un archivo aparte y la carga inicial es más liviana.
+- Cada ruta define `meta.title`. Después de cada navegación, el router lo usa para el título de la pestaña ("Carrito | Ecommerce Vue"). Si el título depende de datos (como el nombre de un producto), la vista llama a `setPageTitle` cuando los datos llegan.
+- Al cambiar de página, `App.vue` lleva el foco al `<main>`, para que quien usa teclado o lector de pantalla no quede perdido.
 
 ### Protección de rutas
 
@@ -83,6 +85,7 @@ src/
       LazyImage.vue       imagen que carga solo cuando está por aparecer en pantalla
     utils/
       format.js           formatPrice: muestra precios como $1,299.50
+      pageTitle.js        setPageTitle: título de la pestaña ("Carrito | Ecommerce Vue")
     views/
       NotFoundView.vue    página 404
   modules/
@@ -127,6 +130,7 @@ src/
        path: '/favoritos',
        name: 'favorites',
        component: () => import('./views/FavoritesView.vue'),
+       meta: { title: 'Favoritos' },
      },
    ]
    ```
