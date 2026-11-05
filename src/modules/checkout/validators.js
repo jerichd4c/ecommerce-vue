@@ -91,4 +91,3 @@ export function validateCheckout(form, referenceDate = new Date()) {
 
   return { isValid, errors }
 }
-
