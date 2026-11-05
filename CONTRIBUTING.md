@@ -13,7 +13,7 @@ El código está organizado **por funcionalidad** (módulos) y no por tipo de ar
 ### Cómo viajan los datos
 
 ```
-Vista (.vue)  ->  Store (Pinia)  ->  http() en shared/http.js  ->  DummyJSON
+Vista (.vue)  ->  Store (Pinia)  ->  api.js del módulo  ->  http() en shared/http.js  ->  DummyJSON
      ^                |
      +----------------+
    la vista lee el estado del store y se actualiza sola
@@ -21,7 +21,8 @@ Vista (.vue)  ->  Store (Pinia)  ->  http() en shared/http.js  ->  DummyJSON
 
 1. La **vista** muestra datos y reacciona a lo que hace el usuario.
 2. El **store** guarda el estado y tiene las funciones que lo cambian (cargar productos, agregar al carrito, iniciar sesión).
-3. **`http()`** hace la llamada a la API. Agrega el token de sesión automáticamente si existe.
+3. **`api.js`** sabe qué endpoint usar y qué campos pedir. Lo tienen los módulos que hablan con la API (por ejemplo, `catalog` y `product`).
+4. **`http()`** hace la llamada a la API. Agrega el token de sesión automáticamente si existe.
 
 Las vistas no llaman a la API directamente; siempre lo hacen a través del store.
 
@@ -52,12 +53,23 @@ setTokenProvider(() => useAuthStore().token)
 
 Así `http.js` pide el token sin saber que existe el módulo `auth`.
 
+La misma regla aplica a los componentes de `shared/`. Por ejemplo, `AppHeader` no importa los stores del carrito ni de la sesión: recibe `cartCount` e `isAuthenticated` como props y emite `logout`. Es `App.vue` quien lo conecta con los stores:
+
+```vue
+<AppHeader
+  :cart-count="cart.count"
+  :is-authenticated="auth.isAuthenticated"
+  @logout="handleLogout"
+/>
+```
+
 ## Estructura de carpetas
 
 ```
 src/
   main.js                 arranca la app: Pinia, router y proveedor del token
-  App.vue                 layout general: enlace "saltar al contenido", header y <RouterView>
+  App.vue                 layout general: enlace "saltar al contenido", header y <RouterView>;
+                          conecta el header con los stores del carrito y de la sesión
   assets/
     main.css              variables de color, estilos base y clases globales
   router/
@@ -65,14 +77,19 @@ src/
   shared/
     http.js               cliente para la API
     components/
-      AppHeader.vue       barra de navegación
+      AppHeader.vue       barra de navegación (recibe datos por props, no importa stores)
       BaseButton.vue      botón con variantes: primary, secondary, danger
       BaseInput.vue       campo con label, mensaje de error y atributos de accesibilidad
       LazyImage.vue       imagen que carga solo cuando está por aparecer en pantalla
+    utils/
+      format.js           formatPrice: muestra precios como $1,299.50
     views/
       NotFoundView.vue    página 404
   modules/
     catalog/
+      api.js              llamadas a la API del catálogo
+      composables/
+        useInfiniteScroll.js   avisa cuando el final de la lista se acerca a la pantalla
     product/
     cart/
     auth/
@@ -94,6 +111,9 @@ src/
 | Un componente que usan dos módulos o más | `shared/components/` (avisar al equipo)                   |
 | Estado que comparten varias vistas       | El `store.js` del módulo                                  |
 | Estado que solo usa un componente        | Un `ref` dentro del mismo componente                      |
+| Llamadas a la API                        | `modules/<modulo>/api.js`, usando `http()`                |
+| Lógica reutilizable con reactividad      | `modules/<modulo>/composables/use<Nombre>.js`             |
+| Una función de ayuda que usan varios     | `shared/utils/` (por ejemplo, `formatPrice`)              |
 | Una prueba                               | `modules/<modulo>/__tests__/<archivo>.spec.js`            |
 
 ### Cómo agregar un módulo nuevo
@@ -157,6 +177,7 @@ src/
 | Vistas                       | PascalCase terminado en `View` | `CartView.vue`                   |
 | Componentes base compartidos | Prefijo `Base`                 | `BaseButton.vue`                 |
 | Archivos JS                  | camelCase                      | `http.js`, `guards.js`           |
+| Composables                  | camelCase con prefijo `use`    | `useInfiniteScroll.js`           |
 | Variables y funciones        | camelCase                      | `fetchProducts`, `isLoading`     |
 | Nombres de ruta              | minúscula                      | `catalog`, `product`, `checkout` |
 | Ramas                        | `feature/<modulo>-<tarea>`     | `feature/cart-store`             |
@@ -246,12 +267,22 @@ Están en `.env`, que no se sube al repositorio. Se crea copiando `.env.example`
 
 ## Pruebas
 
-- Las pruebas usan Vitest y van en `modules/<modulo>/__tests__/`.
-- Ejemplo de referencia: `modules/auth/__tests__/guards.spec.js`.
+- Las pruebas usan Vitest y van en la carpeta `__tests__/` junto al código que prueban (por ejemplo, `modules/cart/__tests__/` o `shared/components/__tests__/`).
+- Ejemplos de referencia:
+  - Store: `modules/cart/__tests__/store.spec.js`
+  - Vista: `modules/cart/__tests__/CartView.spec.js`
+  - Con la API simulada: `modules/product/__tests__/store.spec.js` (usa `vi.mock` sobre `api.js` para no depender de la red)
 - Priorizar las pruebas de la lógica de los stores (por ejemplo, que el total del carrito se calcule bien).
+- Los stores del carrito y de la sesión guardan datos en `localStorage`. En las pruebas que los usen, llamar a `localStorage.clear()` en el `beforeEach`; si no, una prueba puede dejar datos que hagan fallar a otra.
 
 ```bash
 npm run test:unit
+```
+
+Para detectar pruebas que dependen del orden, correrlas en orden aleatorio:
+
+```bash
+npx vitest run --sequence.shuffle
 ```
 
 ## Flujo de trabajo
@@ -260,15 +291,17 @@ El flujo completo de ramas, commits y Pull Requests está en el [README](README.
 
 1. Crear una rama desde `develop`: `feature/<modulo>-<tarea>`.
 2. Commits con formato `tipo: descripción` (`feat`, `fix`, `style`, `refactor`, `docs`, `test`, `chore`).
-3. Abrir un Pull Request hacia `develop`.
+3. Abrir un Pull Request hacia `develop`, con `Closes #N` si resuelve un issue.
 4. Esperar una aprobación antes de hacer merge.
 
 ### Antes de abrir un Pull Request
 
+- [ ] `npm run format` aplicado
 - [ ] `npm run lint` sin errores
-- [ ] `npm run test:unit -- --run` pasa
+- [ ] `npx vitest run --sequence.shuffle` pasa
 - [ ] `npm run build` termina bien
 - [ ] Probado en tamaño celular y computadora
 - [ ] Probado con el teclado
 - [ ] Las vistas nuevas muestran los estados de cargando, error y vacío
 - [ ] No hay `console.log` olvidados
+- [ ] La descripción del PR explica qué se hizo y cómo probarlo
