@@ -133,4 +133,3 @@ describe('useAuthStore', () => {
     expect(auth.isAuthenticated).toBe(false)
   })
 })
-

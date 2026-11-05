@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { http } from '@/shared/http'
 
 const STORAGE_KEY = 'auth'
@@ -48,18 +48,6 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
     localStorage.removeItem(STORAGE_KEY)
   }
-
-  watch(
-    [token, user],
-    ([newToken, newUser]) => {
-      if (newToken) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ token: newToken, user: newUser }))
-      } else {
-        localStorage.removeItem(STORAGE_KEY)
-      }
-    },
-    { deep: true },
-  )
 
   return { token, user, isAuthenticated, login, logout }
 })
