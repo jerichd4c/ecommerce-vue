@@ -1,0 +1,18 @@
+# Configuración de despliegue en Netlify
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  # El proyecto requiere Node 22.18 o superior (ver "engines" en package.json)
+  NODE_VERSION = "22"
+  # .env no se sube al repositorio; la URL de la API es pública, así que se define aquí
+  VITE_API_URL = "https://dummyjson.com"
+
+# El router usa el modo history (/cart, /product/6...). Esas rutas no existen como
+# archivos en el servidor, así que cualquier ruta devuelve index.html y Vue Router decide qué mostrar.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
